@@ -17,6 +17,11 @@ def compression_basic(file_path: Path) -> None:
     print(f"Merges dictionary len: {len(tokenizer.merges)}")
     print(f"Vocab count: {len(tokenizer.vocab)}")
 
+    ids = tokenizer.encode(contents)
+    assert(len(ids) != 0)
+    compression_ratio = len(contents) / len(ids)
+    print(f"Compression ratio: {compression_ratio:.4}")
+
 
 if __name__ == "__main__":
     compression_basic(TESTS_DIR / "taylorswift.txt")
