@@ -31,7 +31,7 @@ class CausalSelfAttention(nn.Module):
 
         # C splittato in n_head teste. Ogni testa analizza una parte diversa degli embedding
         head_dim = C // self.n_head
-        # Con la trasposizione si passa da (B, T, n_head, head_dim) a (B, n_head, T, head_dim) per il prodotto
+        # Con la trasposizione si CausalSelfAttentionpassa da (B, T, n_head, head_dim) a (B, n_head, T, head_dim) per il prodotto
         q = q.view(B, T, self.n_head, head_dim).transpose(1, 2)
         k = k.view(B, T, self.n_head, head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_head, head_dim).transpose(1, 2)
@@ -53,17 +53,43 @@ class CausalSelfAttention(nn.Module):
 
         return self.c_proj(y)
 
+# Una volta create le relazioni tra i token, ora si elaborano le informazioni 
 class FeedForward(nn.Module):
     def __init__(self, config):
         super().__init__()
-        pass
 
+        # Espansione di 4 volte la dimensione degli embedding per aumentare la capacità del modello
+        self.c_esp = nn.Linear(config.n_embd, 4 * config.n_embd)
+        
+        # Funzione di attivazione standard
+        self.gelu = nn.GELU()
+
+        # Contrazione alla dimensione originale degli embedding
+        self.c_contr = nn.Linear(4 * config.n_embd, config.n_embd)
+
+    def forward(self, x):
+        x = self.c_esp(x)
+        x = self.gelu(x)
+        x = self.c_contr(x)
+        return x
+        
+# Un blocco Transformer combina attenzione, feedforward, normalizzazione e residual connection
+# La normalizzazione prende i dati e li normalizza in modo che abbiano media 0 e variaza 1
+# La residual connection aggiunge l'input originale all'output del blocco, invece di trasformarlo completamente
 class TransformerBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
-        pass
+        
+        self.ln1 = nn.LayerNorm(config.n_embd)
+        self.attn = CausalSelfAttention(config)
+        
+        self.ln2 = nn.LayerNorm(config.n_embd)
+        self.ffn = FeedForward(config)
 
     def forward(self, x):
+        # Norm applicata prima dell'attenzione per rendere il training più stabile
+        x = x + self.attn(self.ln1(x))
+        x = x + self.ffn(self.ln2(x))
         return x
 
 class CodeIOLLM(nn.Module):
