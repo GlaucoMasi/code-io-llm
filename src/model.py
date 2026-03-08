@@ -79,7 +79,7 @@ class FeedForward(nn.Module):
 class TransformerBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
-        
+
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.attn = CausalSelfAttention(config)
         
@@ -95,7 +95,36 @@ class TransformerBlock(nn.Module):
 class CodeIOLLM(nn.Module):
     def __init__(self, config):
         super().__init__()
-        pass
+        
+        # Embedding del vocabolario, da token a vettori
+        self.token_embedding = nn.Embedding(config.vocab_size, config.n_embd)
 
-    def forward(self, idx, targets=None):
-        return idx
+        # Embedding della posizione, da posizione a vettori
+        self.position_embedding = nn.Embedding(config.block_size, config.n_embd)
+
+        # Stack di N TransformerBlocks
+        self.blocks = nn.Sequential(*[TransformerBlock(config) for _ in range(config.n_layer)])
+
+        # Normalizzazione finale e Testa di output
+        self.ln_f = nn.LayerNorm(config.n_embd)
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size)
+
+    def forward(self, idx):
+        B, T = idx.shape
+
+        # Indici di posizione, 0-based. Mantenendo lo stesso device dell'input
+        pos = torch.arange(0, T, dtype=torch.long, device=idx.device)
+
+        # Somma degli embedding: (Token + Posizione)
+        tok_emb = self.token_embedding(idx)
+        pos_emb = self.position_embedding(pos)
+        x = tok_emb + pos_emb
+
+        # Forward pass attraverso i blocchi
+        x = self.blocks(x)
+
+        # Normalizzazione finale e Logits per la decisione finale
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
+
+        return logits
