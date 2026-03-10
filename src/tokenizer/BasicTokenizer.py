@@ -17,7 +17,7 @@ class BasicTokenizer(Tokenizer):
     def __init__(self):
         super().__init__()
 
-    def train(self, text, vocab_size, verbose=False):
+    def train(self, text, vocab_size,  verbose=False):
         assert vocab_size >= 256
         num_merges = vocab_size - 256
 
@@ -28,6 +28,7 @@ class BasicTokenizer(Tokenizer):
         # iteratively merge the most common pairs to create new tokens
         merges = {} # (int, int) -> int
         vocab = {idx: bytes([idx]) for idx in range(256)} # int -> bytes
+
 
         # TODO optimize this part
         # currently runs in N^2 due to recalculation of the counts of consecutive bytes, that can refactored
@@ -51,7 +52,7 @@ class BasicTokenizer(Tokenizer):
             # prints
             if verbose:
                 print(f"merge {i+1}/{num_merges}: {pair} -> {idx} ({vocab[idx]}) had {stats[pair]} occurrences")
-
+       
         # save class variables
         self.merges = merges # used in encode()
         self.vocab = vocab   # used in decode()

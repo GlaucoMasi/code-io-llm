@@ -1,7 +1,7 @@
 import pytest
 import os
 
-from src import BasicTokenizer
+from src.tokenizer import BasicTokenizer
 
 # -----------------------------------------------------------------------------
 # common test data

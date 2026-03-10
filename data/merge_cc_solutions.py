@@ -26,6 +26,8 @@ except ImportError:
 
 from datasets import load_dataset
 
+BOS = 501
+
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
@@ -63,6 +65,8 @@ def main() -> None:
             break
 
         name   = problem.get("name", "?")
+        description = problem.get("description", "No description found")
+
         source = SOURCE_NAMES.get(problem.get("source", 0), "UNKNOWN")
         solutions = problem.get("solutions", {})
 
@@ -75,9 +79,7 @@ def main() -> None:
             if lang == CPP_LANGUAGE and code and code.strip():
                 idx = len(collected) + 1
                 header = (
-                    f"// --- Solution {idx:03d} ---\n"
-                    f"// Problem : {name}\n"
-                    f"// Source  : {source}\n\n"
+                    f"{description}\n"
                 )
                 collected.append(header + code.strip())
                 print(f"  [{idx:3d}/{MAX_SOLUTIONS}] {source} — {name[:60]}")

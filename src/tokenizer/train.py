@@ -15,7 +15,7 @@ def train(input_file, output_file_prefix, vocab_size):
     print(f"Merges dictionary len: {len(tokenizer.merges)}")
     print(f"Vocab count: {len(tokenizer.vocab)}")
     tokenizer.save(output_file_prefix)
-    print("Toeen model saved")
+    print("Token model saved")
 
 
 if __name__ == "__main__":

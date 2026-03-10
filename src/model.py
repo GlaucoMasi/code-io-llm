@@ -9,17 +9,17 @@ class CausalSelfAttention(nn.Module):
         super().__init__()
 
         # Configs
-        self.n_head = config.n_head
-        self.n_embd = config.n_embd
+        self.n_head = config["n_head"]
+        self.n_embd = config["n_embd"]
 
         # Proiezione Q, K, V + Proiezioni di output
-        self.c_attn = nn.Linear(config.n_embd, 3 * self.n_embd)
-        self.c_proj = nn.Linear(config.n_embd, self.n_embd)
+        self.c_attn = nn.Linear(config["n_embd"], 3 * self.n_embd)
+        self.c_proj = nn.Linear(config["n_embd"], self.n_embd)
 
         # Maschera causale, triangolare inferiore, in modo che il softmax escluda interazioni con token futuri 
-        mask = torch.tril(torch.ones(config.block_size, config.block_size))
+        mask = torch.tril(torch.ones(config["block_size"], config["block_size"]))
         # register_buffer indica che questo non è un parametro da imparare, è una costante
-        self.register_buffer("mask", mask.view(1, 1, config.block_size, config.block_size))
+        self.register_buffer("mask", mask.view(1, 1, config["block_size"], config["block_size"]))
 
     def forward(self, x):
         # B: batch_size, T: lunghezza sequenza, C: n_embd
@@ -59,13 +59,13 @@ class FeedForward(nn.Module):
         super().__init__()
 
         # Espansione di 4 volte la dimensione degli embedding per aumentare la capacità del modello
-        self.c_esp = nn.Linear(config.n_embd, 4 * config.n_embd)
+        self.c_esp = nn.Linear(config["n_embd"], 4 * config["n_embd"])
         
         # Funzione di attivazione standard
         self.gelu = nn.GELU()
 
         # Contrazione alla dimensione originale degli embedding
-        self.c_contr = nn.Linear(4 * config.n_embd, config.n_embd)
+        self.c_contr = nn.Linear(4 * config["n_embd"], config["n_embd"])
 
     def forward(self, x):
         x = self.c_esp(x)
@@ -80,10 +80,10 @@ class TransformerBlock(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        self.ln1 = nn.LayerNorm(config.n_embd)
+        self.ln1 = nn.LayerNorm(config["n_embd"])
         self.attn = CausalSelfAttention(config)
         
-        self.ln2 = nn.LayerNorm(config.n_embd)
+        self.ln2 = nn.LayerNorm(config["n_embd"])
         self.ffn = FeedForward(config)
 
     def forward(self, x):
@@ -97,17 +97,17 @@ class CodeIOLLM(nn.Module):
         super().__init__()
         
         # Embedding del vocabolario, da token a vettori
-        self.token_embedding = nn.Embedding(config.vocab_size, config.n_embd)
+        self.token_embedding = nn.Embedding(config["vocab_size"], config["n_embd"])
 
         # Embedding della posizione, da posizione a vettori
-        self.position_embedding = nn.Embedding(config.block_size, config.n_embd)
+        self.position_embedding = nn.Embedding(config["block_size"], config["n_embd"])
 
         # Stack di N TransformerBlocks
-        self.blocks = nn.Sequential(*[TransformerBlock(config) for _ in range(config.n_layer)])
+        self.blocks = nn.Sequential(*[TransformerBlock(config) for _ in range(config["n_layer"])])
 
         # Normalizzazione finale e Testa di output
-        self.ln_f = nn.LayerNorm(config.n_embd)
-        self.lm_head = nn.Linear(config.n_embd, config.vocab_size)
+        self.ln_f = nn.LayerNorm(config["n_embd"])
+        self.lm_head = nn.Linear(config["n_embd"], config["vocab_size"])
 
     def forward(self, idx):
         B, T = idx.shape
