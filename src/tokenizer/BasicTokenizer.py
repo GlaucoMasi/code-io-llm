@@ -4,11 +4,10 @@ Minimal (byte-level) Byte Pair Encoding tokenizer.
 Algorithmically follows along the GPT tokenizer:
 https://github.com/openai/gpt-2/blob/master/src/encoder.py
 
-But:
-- Does not handle the regular expression splitting pattern.
-- Does not handle any special tokens.
+but handles special tokens natively via `allowed_special` argument during encoding.
 """
 
+import re
 from .Tokenizer import Tokenizer, get_stats, merge, get_pairs
 
 
@@ -63,7 +62,32 @@ class BasicTokenizer(Tokenizer):
         text = text_bytes.decode("utf-8", errors="replace") # replace is necessary since merged ids could not reflect to valid utf8 encoding
         return text
 
-    def encode(self, text):
+    def encode(self, text, allowed_special="none"):
+        # allowed_special can be "all", "none", or a set of allowed special tokens
+        if allowed_special == "all":
+            special = self.special_tokens
+        elif allowed_special == "none":
+            special = {}
+        elif isinstance(allowed_special, set):
+            special = {k: v for k, v in self.special_tokens.items() if k in allowed_special}
+        else:
+            raise ValueError(f"allowed_special={allowed_special} not understood")
+
+        if not special:
+            return self._encode_chunk(text)
+
+        special_pattern = "(" + "|".join(re.escape(k) for k in special) + ")"
+        chunks = re.split(special_pattern, text)
+        
+        ids = []
+        for chunk in chunks:
+            if chunk in special:
+                ids.append(special[chunk])
+            elif chunk:
+                ids.extend(self._encode_chunk(chunk))
+        return ids
+
+    def _encode_chunk(self, text):
         # given a string text, return the token ids
         text_bytes = text.encode("utf-8") # raw bytes
         ids = list(text_bytes) # list of integers in range 0..255

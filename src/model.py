@@ -16,10 +16,9 @@ class CausalSelfAttention(nn.Module):
         self.c_attn = nn.Linear(config["n_embd"], 3 * self.n_embd)
         self.c_proj = nn.Linear(config["n_embd"], self.n_embd)
 
-        # Maschera causale, triangolare inferiore, in modo che il softmax escluda interazioni con token futuri 
-        mask = torch.tril(torch.ones(config["block_size"], config["block_size"]))
-        # register_buffer indica che questo non è un parametro da imparare, è una costante
-        self.register_buffer("mask", mask.view(1, 1, config["block_size"], config["block_size"]))
+        # La maschera manuale non serve più grazie a F.scaled_dot_product_attention()
+        # mask = torch.tril(torch.ones(config["block_size"], config["block_size"]))
+        # self.register_buffer("mask", mask.view(1, 1, config["block_size"], config["block_size"]))
 
     def forward(self, x):
         # B: batch_size, T: lunghezza sequenza, C: n_embd
@@ -36,17 +35,9 @@ class CausalSelfAttention(nn.Module):
         k = k.view(B, T, self.n_head, head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_head, head_dim).transpose(1, 2)
 
-        # Attention score. Quanto la query è compatibile con la key 
-        attention = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(head_dim))
-
-        # Causal masking
-        attention = attention.masked_fill(self.mask[:, :, :T, :T] == 0, float('-inf'))
-
-        # Probabilità normalizzate affinchè sommino 1
-        attention = F.softmax(attention, dim=3)
-
-        # Contesto pesato considerando la Value 
-        y = attention @ v
+        # FlashAttention equivalente: calcola attenzioni in modo efficiente ed evita di instanziare O(N^2) memoria
+        # is_causal=True applica automaticamente la maschera triangolare inferiore
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=True)
 
         # Con la trasposizione si passa da (B, n_head, T, head_dim) a (B, T, C). Anche detto Ricongiungimento
         y = y.transpose(1, 2).contiguous().view(B, T, C)
@@ -128,3 +119,52 @@ class CodeIOLLM(nn.Module):
         logits = self.lm_head(x)
 
         return logits
+
+    @torch.no_grad()
+    def generate(
+        self,
+        tokenizer,
+        prompt: str,
+        block_size: int,
+        max_tokens: int = 200,
+        temperature: float = 0.8,
+        top_k: int = 40,
+        device: str = "cpu",
+    ) -> str:
+        """
+        Genera codice ricorsivamente partendo dal prompt.
+        """
+        self.eval()
+        # Allow special tokens so format labels like <|system|> are recognized
+        ids = tokenizer.encode(prompt, allowed_special="all")
+        x = torch.tensor(ids, dtype=torch.long, device=device).unsqueeze(0)  # (1, T)
+
+        for _ in range(max_tokens):
+            # Crop to block_size context window
+            x_cond = x[:, -block_size:]
+            logits = self(x_cond)           # (1, T, vocab)
+            logits = logits[:, -1, :]       # (1, vocab)
+            
+            # Mask out tokens that are not in the vocabulary
+            vocab_size = len(tokenizer.vocab)
+            if logits.size(-1) > vocab_size:
+                logits[:, vocab_size:] = float("-inf")
+            elif logits.size(-1) < vocab_size:
+                raise ValueError(f"Model vocab size ({logits.size(-1)}) is smaller than tokenizer vocab size ({vocab_size})")
+
+            if temperature > 0.0:
+                logits = logits / temperature
+            
+            # Top-k filtering
+            if top_k is not None:
+                v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
+                logits[logits < v[:, [-1]]] = float("-inf")
+            
+            probs = F.softmax(logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)  # (1, 1)
+            x = torch.cat([x, next_token], dim=1)
+            
+            # Optional: early stopping check if you introduce a particular token, not needed here
+            
+        self.train()
+        return tokenizer.decode(x[0].tolist())

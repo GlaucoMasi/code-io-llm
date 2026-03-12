@@ -16,6 +16,7 @@ import torch.nn as nn
 
 from src.tokenizer.BasicTokenizer import BasicTokenizer
 from src.model import CodeIOLLM
+from src.dataset import create_dataloaders
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -26,9 +27,8 @@ def load_config(name: str) -> dict:
 
 
 def load_docs(path: str) -> list[str]:
-    with open(path, "r") as f:
-        docs = f.read().splitlines()
-    return [d for d in docs if d.strip()]
+    # Non più necessario
+    pass
 
 
 def peak_memory_mb() -> float:
@@ -45,7 +45,6 @@ def peak_memory_mb() -> float:
 
 def run_benchmark(config_name: str = "small", bench_steps: int = 100, warmup_steps: int = 5):
     config = load_config(config_name)
-    docs   = load_docs("data/code_contests_cpp.txt")
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"\n{'='*56}")
@@ -63,7 +62,7 @@ def run_benchmark(config_name: str = "small", bench_steps: int = 100, warmup_ste
     model.train()
 
     loss_fn   = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=float(config["learning_rate"]))
 
     tokenizer = BasicTokenizer()
     tokenizer.load("src/tokenizer/test.model")
@@ -80,25 +79,35 @@ def run_benchmark(config_name: str = "small", bench_steps: int = 100, warmup_ste
     losses:      list[float] = []
     doc_idx = 0
 
+    train_dl, _ = create_dataloaders("data/code_contests_cpp.txt", tokenizer, config["block_size"], batch_size=1)
+    train_iter = iter(train_dl)
+
     total_steps = warmup_steps + bench_steps
     for step in range(total_steps):
-        # Grab a non-empty doc
-        while True:
-            doc = docs[doc_idx % len(docs)]
-            doc_idx += 1
-            ids = tokenizer.encode(doc)[:config["block_size"]]
-            if len(ids) >= 2:
-                break
+        try:
+            tokens, shift_labels = next(train_iter)
+        except StopIteration:
+            train_iter = iter(train_dl)
+            tokens, shift_labels = next(train_iter)
 
-        tokens = torch.tensor(ids, dtype=torch.long).unsqueeze(0).to(device)
+        tokens = tokens.to(device)
+        shift_labels = shift_labels.to(device)
 
         t0 = time.perf_counter()
 
         optimizer.zero_grad(set_to_none=True)
         logits       = model(tokens)
-        shift_logits = logits[:, :-1, :].contiguous()
-        shift_labels = tokens[:, 1:].contiguous()
-        loss         = loss_fn(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        
+        # In this dataset abstraction, x and y are already shifted
+        logits = logits.view(-1, logits.size(-1))
+        y_flat = shift_labels.view(-1)
+
+        if (y_flat != -100).sum() == 0:
+            # Skip this batch if all tokens are masked out (e.g. falls entirely inside a long prompt)
+            continue
+            
+        loss = loss_fn(logits, y_flat)
+
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
@@ -112,12 +121,12 @@ def run_benchmark(config_name: str = "small", bench_steps: int = 100, warmup_ste
             label = "warmup"
         else:
             step_times.append(elapsed)
-            step_tokens.append(len(ids))
+            step_tokens.append(tokens.numel())
             losses.append(loss.item())
             label = "bench "
 
         print(f"  [{label}] step {step+1:4d}/{total_steps} | "
-              f"loss {loss.item():.4f} | {elapsed*1000:.1f} ms | {len(ids)} tok")
+              f"loss {loss.item():.4f} | {elapsed*1000:.1f} ms | {tokens.numel()} tok")
 
     # ── Summary ───────────────────────────────────────────────────────────────
     avg_ms        = (sum(step_times) / len(step_times)) * 1000
