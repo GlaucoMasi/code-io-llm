@@ -90,7 +90,7 @@ def estimate_loss(model, val_loader, eval_iters=50):
 def make_summary_dir(config: dict) -> str:
     """Genera un nome di cartella descrittivo per i log/summary in 'runs/'."""
     n_steps = config['num_steps']
-    steps_str = f"{n_steps//1000}ksteps" if n_steps >= 1000 and n_steps % 1000 == 0 else f"{n_steps}s"
+    steps_str = f"{n_steps//1000}ksteps" if n_steps >= 1000 and n_steps % 1000 == 0 else f"{n_steps}steps"
 
     parts = [
         f"{config['n_layer']}L",
@@ -265,8 +265,12 @@ if __name__ == "__main__":
     
     demo_output = []
     
-    for prompt in prompts:
-        msg1 = f"\nPrompt: {repr(prompt)}\n{'-' * 40}"
+    for i, prompt in enumerate(prompts):
+        if i > 0:
+            print()
+            demo_output.append("")
+            
+        msg1 = f"Prompt: {repr(prompt)}\n{'-' * 40}"
         print(msg1)
         demo_output.append(msg1)
         

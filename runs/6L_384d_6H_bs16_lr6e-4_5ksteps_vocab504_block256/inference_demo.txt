@@ -1,0 +1,56 @@
+Prompt: '#include'
+----------------------------------------
+#includege(int _n, k, q);
+  cin >> n >> k >> a >> b >> q;
+  while (q--) {
+    int typ;
+    scanf("%d", &typ);
+    if (typ == 1) {
+      int d, x;
+      scanf("%d%d", &d, &x);
+      ar[d] += x;
+      upd(1, 1, n, d);
+    } else {
+      int p;
+      scanf("%d", &d, &x);
+      ar[d] += x;
+      upd(1, 1, n, d);
+    } else {
+      int p;
+      scanf("%d", &p);
+      p
+
+Prompt: 'int main() {'
+----------------------------------------
+int main() { ; cin >> n;
+  for (long long i = 1; i <= n; i++) {
+    scanf(" %d %d", &c, &t = a;
+    s += a;
+    s += a;
+      t = a;
+      bswap(B, [a]);
+    }] = to[b].insert((n), ed);
+    }
+    if (nk[a] < 0) {
+      if (k[k[k]) {
+        puts("NO");
+        exit(0);
+      continue;
+      }
+    }
+    long long g = gcd(a, gcd(-b, mabs(c));
+    a /= g, if (!b) {
+      if ((b)) {
+    
+
+Prompt: 'for (int i = 0;'
+----------------------------------------
+for (int i = 0; (i) < (int)(H); ++(i)) {
+    assert(A[i].size() == 1 << logw);
+    fft(logw, A[i].data());
+  }
+  vector<Ring> tmp(1 << logh);
+  for (int(j) = 0; (j) < (int)(1 << logw); ++(j)) {
+    for (int(i) = 0; (i) < (int)(1 << logh); ++(i)) tmp[i] = A[i][j];
+    inverse_fft(logh, tmp.data());
+    for (int(i) = 0
