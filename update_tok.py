@@ -5,17 +5,20 @@ def main():
     t = BasicTokenizer()
     t.load("src/tokenizer/test.model")
     
-    current_vocab_size = len(t.vocab)
-    print(f"Current vocab size: {current_vocab_size}")
+    # Base vocabulary is 256 bytes + the trained merges
+    base_vocab_size = 256 + len(t.merges)
+    print(f"Base (bytes + merges) size: {base_vocab_size}")
     
     special_tokens = ["<|system|>", "<|user|>", "<|model|>", "<|endoftext|>"]
     for i, st in enumerate(special_tokens):
-        t.special_tokens[st] = current_vocab_size + i
+        # Always assign deterministically to avoid shifting IDs on re-runs
+        t.special_tokens[st] = base_vocab_size + i
         
     t.vocab = t._build_vocab()
     
-    new_vocab_size = len(t.vocab)
-    print(f"New vocab size: {new_vocab_size}")
+    # Calculate exactly what nn.Embedding needs (max index + 1)
+    new_vocab_size = max(t.vocab.keys()) + 1
+    print(f"New Configured Vocab Size (max_index + 1): {new_vocab_size}")
     
     t.save("src/tokenizer/test")
     
