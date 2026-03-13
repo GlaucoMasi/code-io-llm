@@ -142,8 +142,8 @@ class CodeIOLLM(nn.Module):
         for _ in range(max_tokens):
             # Crop to block_size context window
             x_cond = x[:, -block_size:]
-            logits = self(x_cond)           # (1, T, vocab)
-            logits = logits[:, -1, :]       # (1, vocab)
+            logits = self(x_cond)           # (1, T, vocab) the model outputs logits for every position in the prompt, but we only care about the last one
+            logits = logits[:, -1, :]       # (1, vocab), here we take only the last one
             
             # Mask out tokens that are not in the vocabulary
             vocab_size = len(tokenizer.vocab)
@@ -161,7 +161,7 @@ class CodeIOLLM(nn.Module):
                 logits[logits < v[:, [-1]]] = float("-inf")
             
             probs = F.softmax(logits, dim=-1)
-            next_token = torch.multinomial(probs, num_samples=1)  # (1, 1)
+            next_token = torch.multinomial(probs, num_samples=1)  # (1, 1), next token is chosen among this probability distribution (beam search)  instead of taking only the most probable one
             x = torch.cat([x, next_token], dim=1)
             
             # Optional: early stopping check if you introduce a particular token, not needed here

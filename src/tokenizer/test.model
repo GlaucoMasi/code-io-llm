@@ -1,10 +1,10 @@
 minbpe v1
 
 4
-<|system|> 500
-<|user|> 501
-<|model|> 502
-<|endoftext|> 503
+<|system|> 504
+<|user|> 505
+<|model|> 506
+<|endoftext|> 507
 32 32
 61 61
 256 256

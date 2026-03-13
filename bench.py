@@ -129,6 +129,12 @@ def run_benchmark(config_name: str = "small", bench_steps: int = 100, warmup_ste
               f"loss {loss.item():.4f} | {elapsed*1000:.1f} ms | {tokens.numel()} tok")
 
     # ── Summary ───────────────────────────────────────────────────────────────
+    if not step_times:
+        print("\n========================================================")
+        print("  WARNING: No benchmark steps completed. All batches were skipped entirely.")
+        print("========================================================\n")
+        return
+
     avg_ms        = (sum(step_times) / len(step_times)) * 1000
     min_ms        = min(step_times) * 1000
     max_ms        = max(step_times) * 1000
@@ -136,8 +142,8 @@ def run_benchmark(config_name: str = "small", bench_steps: int = 100, warmup_ste
     total_time    = sum(step_times)
     tokens_per_s  = total_tokens / total_time
     steps_per_s   = len(step_times) / total_time
-    first_loss    = losses[0]
-    last_loss     = losses[-1]
+    first_loss    = losses[0] if losses else float('nan')
+    last_loss     = losses[-1] if losses else float('nan')
     mem_mb        = peak_memory_mb()
 
     print(f"\n{'='*56}")
