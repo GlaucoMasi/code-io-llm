@@ -1,0 +1,11 @@
+block_size: 256
+learning_rate: 6e-4
+log_every: 100
+min_lr: 6e-5
+n_embd: 384
+n_head: 6
+n_layer: 6
+num_steps: 500
+save_every: 1000
+vocab_size: 508
+warmup_steps: 200

@@ -1,0 +1,44 @@
+
+Prompt: '#include'
+----------------------------------------
+#includefindefrt(e_llodeftreame he_withe_e_sz;
+  htehI vector<int> dp[htind);
+  cin.tinedge(;
+  for (int ha = coe[i].siz(llownodefode;
+  return lodedodefodelodeedeloreair<int> defir(ttinlodef(pe <<intf("%d\nodelodef = fir(e_e());
+  int tinf e(); i++) {
+    able basecond
+
+Prompt: 'int main() {'
+----------------------------------------
+int main() {}
+  vector<int>> > loint, const nxt[100000010000 + m = (0], r;
+  while (lool 0][0, lool != (j) &10; j00); (i; j); (r, j); (10), (j) {
+        int j) = 0)) = (1); (pos); (j) <= (j) = 0; ++(int); (int)) = (j))
+        l) = 0; (i) < -= (n)(j) <= (1 <++)
+        if (!= (j) <= 
+
+Prompt: 'for (int i = 0;'
+----------------------------------------
+for (int i = 0;mii >= mi++)
+        can[i] << " << " ")) {
+      cout << " " " " << endl " << " << " << " << " << " << "));
+}
+<|endoftext|> " << endl " << endl;
+}
+<|endoftext|>(c << endl;
+
+sigine Fit((int(int(j);
+}
+<|endoftext|> << endl(0, int> E ";
+// ";
+
+  while (j = ty(j << " << x)
+
+}
+
+		// ", {
+	  cout << " ");
+		// "; j = x " ");
+		}
+

@@ -1,0 +1,57 @@
+{
+  "started_at": "2026-03-13T21:17:22.017455",
+  "device": "cuda:0",
+  "gpu_name": "NVIDIA GeForce RTX 2070 SUPER",
+  "total_params": 11136508,
+  "training_time_seconds": 56.1,
+  "training_time_human": "0h 0m 56s",
+  "final_train_loss": 2.7561,
+  "final_val_loss": 2.6272,
+  "best_val_loss": 2.6272,
+  "best_val_step": 500,
+  "config": {
+    "block_size": 256,
+    "learning_rate": "6e-4",
+    "log_every": 100,
+    "min_lr": "6e-5",
+    "n_embd": 384,
+    "n_head": 6,
+    "n_layer": 6,
+    "num_steps": 500,
+    "save_every": 1000,
+    "vocab_size": 508,
+    "warmup_steps": 200
+  },
+  "loss_history": [
+    {
+      "step": 1,
+      "train_loss": 6.3688,
+      "val_loss": 6.4272
+    },
+    {
+      "step": 100,
+      "train_loss": 5.3147,
+      "val_loss": 3.925
+    },
+    {
+      "step": 200,
+      "train_loss": 3.8542,
+      "val_loss": 3.1147
+    },
+    {
+      "step": 300,
+      "train_loss": 3.3103,
+      "val_loss": 2.9411
+    },
+    {
+      "step": 400,
+      "train_loss": 2.9775,
+      "val_loss": 2.7201
+    },
+    {
+      "step": 500,
+      "train_loss": 2.7561,
+      "val_loss": 2.6272
+    }
+  ]
+}
