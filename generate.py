@@ -30,7 +30,6 @@ def load_model(checkpoint_path: str, config: dict, device: str) -> CodeIOLLM:
     model.load_state_dict(uncompiled_state_dict)
     model.eval()
     return model
-    return model
 
 
 def main():

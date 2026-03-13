@@ -1,3 +1,13 @@
+"""
+train.py — Training loop for CodeIOLLM.
+
+Trains the CodeIOLLM model on the provided dataset, with a linear warmup + cosine decay learning rate schedule.
+Checkpoints are saved periodically, and the best checkpoint (lowest validation loss) is also saved separately.
+
+Usage:
+    PYTHONPATH=. python3 src/train.py
+"""
+
 import math
 import os
 import torch
